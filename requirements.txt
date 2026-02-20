@@ -1,0 +1,11 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.4
+python-socketio==5.9.0
+python-engineio==4.5.1
+requests==2.31.0
+python-magic==0.4.27
+python-magic-bin==0.4.14
+GitPython==3.1.32
+Pillow==10.0.0
+Werkzeug==2.3.7

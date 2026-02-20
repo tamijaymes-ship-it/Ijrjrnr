@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adixtpy Security Scanner - Advanced Threat Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="glow-bg">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div class="glow-orb orb-4"></div>
+        <div class="glow-orb orb-5"></div>
+    </div>
+
+    <!-- Matrix rain effect -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span class="logo-text">Adixtpy Security</span>
+                <span class="logo-badge">v2.0</span>
+            </div>
+            <div class="header-right">
+                <div class="owner-tag">
+                    <span class="owner-icon">👑</span>
+                    <span class="owner-name">Created by Adixtpy</span>
+                </div>
+                <div class="live-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="live-text">LIVE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card" data-glow="red">
+                <div class="stat-icon">🔢</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalScans">0</div>
+                    <div class="stat-label">Total Scans</div>
+                </div>
+                <div class="stat-trend positive">+12%</div>
+            </div>
+            <div class="stat-card" data-glow="blue">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="threatsFound">0</div>
+                    <div class="stat-label">Threats Found</div>
+                </div>
+                <div class="stat-trend negative">-3%</div>
+            </div>
+            <div class="stat-card" data-glow="green">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="cleanFiles">0</div>
+                    <div class="stat-label">Clean Files</div>
+                </div>
+                <div class="stat-trend positive">+8%</div>
+            </div>
+            <div class="stat-card" data-glow="purple">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="avgRisk">0%</div>
+                    <div class="stat-label">Avg Risk Score</div>
+                </div>
+                <div class="stat-trend neutral">0%</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="main-grid">
+            <!-- Scanner Panel -->
+            <div class="scanner-panel glass-effect">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <span class="title-glow"></span>
+                        Advanced Threat Scanner
+                    </h2>
+                    <div class="panel-badge">AI-POWERED</div>
+                </div>
+                
+                <!-- Scan Mode Selector -->
+                <div class="scan-mode-selector">
+                    <button class="mode-btn active" data-mode="file" onclick="setScanMode('file')">
+                        <span class="mode-icon">📁</span>
+                        <span class="mode-text">File</span>
+                        <span class="mode-desc">Scan any file</span>
+                    </button>
+                    <button class="mode-btn" data-mode="url" onclick="setScanMode('url')">
+                        <span class="mode-icon">🌐</span>
+                        <span class="mode-text">URL</span>
+                        <span class="mode-desc">Check website safety</span>
+                    </button>
+                    <button class="mode-btn" data-mode="github" onclick="setScanMode('github')">
+                        <span class="mode-icon">🐙</span>
+                        <span class="mode-text">GitHub</span>
+                        <span class="mode-desc">Analyze repository</span>
+                    </button>
+                </div>
+
+                <!-- File Upload Area -->
+                <div id="fileScanArea" class="scan-area">
+                    <div class="upload-container" id="uploadContainer">
+                        <input type="file" id="fileInput" style="display: none;">
+                        <div class="upload-content">
+                            <div class="upload-icon">📂</div>
+                            <h3 class="upload-title">Drop your file here</h3>
+                            <p class="upload-desc">or click to browse (max 50MB)</p>
+                            <div class="upload-formats">
+                                <span class="format-badge">All files supported</span>
+                                <span class="format-badge">ZIP archives</span>
+                                <span class="format-badge">Documents</span>
+                                <span class="format-badge">Executables</span>
+                            </div>
+                        </div>
+                        <div class="upload-progress" id="uploadProgress">
+                            <div class="progress-bar"></div>
+                        </div>
+                    </div>
+                    <div id="selectedFileInfo" class="file-info" style="display: none;">
+                        <div class="file-details">
+                            <span class="file-name"></span>
+                            <span class="file-size"></span>
+                        </div>
+                        <button class="remove-file" onclick="removeSelectedFile()">✕</button>
+                    </div>
+                </div>
+
+                <!-- URL Input Area -->
+                <div id="urlScanArea" class="scan-area" style="display: none;">
+                    <div class="input-container">
+                        <div class="input-icon">🔗</div>
+                        <input type="text" class="url-input" id="urlInput" placeholder="Enter URL to scan (e.g., https://example.com)">
+                        <div class="input-suggestions">
+                            <button class="suggestion" onclick="setUrlExample('https://google.com')">google.com</button>
+                            <button class="suggestion" onclick="setUrlExample('https://github.com')">github.com</button>
+                            <button class="suggestion" onclick="setUrlExample('https://stackoverflow.com')">stackoverflow.com</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub Input Area -->
+                <div id="githubScanArea" class="scan-area" style="display: none;">
+                    <div class="input-container">
+                        <div class="input-icon">🐙</div>
+                        <input type="text" class="url-input" id="githubInput" placeholder="Enter GitHub repository URL">
+                        <div class="input-suggestions">
+                            <button class="suggestion" onclick="setGitHubExample('https://github.com/tensorflow/tensorflow')">tensorflow/tensorflow</button>
+                            <button class="suggestion" onclick="setGitHubExample('https://github.com/facebook/react')">facebook/react</button>
+                            <button class="suggestion" onclick="setGitHubExample('https://github.com/microsoft/vscode')">microsoft/vscode</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scan Button -->
+                <button class="scan-btn" onclick="startScan()" id="scanBtn">
+                    <span class="btn-text">🚀 Start Scan</span>
+                    <span class="btn-loader" style="display: none;"></span>
+                </button>
+
+                <!-- Results Panel -->
+                <div class="results-panel" id="resultsPanel" style="display: none;">
+                    <div class="results-header">
+                        <h3>Scan Results</h3>
+                        <div class="scan-id" id="scanId"></div>
+                    </div>
+                    
+                    <!-- Risk Meter -->
+                    <div class="risk-meter-container">
+                        <div class="risk-meter">
+                            <div class="risk-fill" id="riskFill" style="width: 0%"></div>
+                        </div>
+                        <div class="risk-labels">
+                            <span class="risk-label safe">Safe</span>
+                            <span class="risk-label low">Low</span>
+                            <span class="risk-label medium">Medium</span>
+                            <span class="risk-label high">High</span>
+                            <span class="risk-label critical">Critical</span>
+                        </div>
+                    </div>
+
+                    <!-- File Information -->
+                    <div class="file-info-panel" id="fileInfoPanel"></div>
+
+                    <!-- Threats List -->
+                    <div class="threats-section">
+                        <h4 class="section-title">
+                            <span class="title-icon">⚠️</span>
+                            Detected Threats
+                            <span class="threat-count" id="threatCount">0</span>
+                        </h4>
+                        <div class="threats-list" id="threatsList"></div>
+                    </div>
+
+                    <!-- VirusTotal Results -->
+                    <div class="vt-section" id="vtSection" style="display: none;">
+                        <h4 class="section-title">
+                            <span class="title-icon">🔬</span>
+                            VirusTotal Analysis
+                        </h4>
+                        <div class="vt-grid" id="vtResults"></div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="result-actions">
+                        <button class="action-btn" onclick="downloadReport()">
+                            <span class="action-icon">📥</span>
+                            Download Report
+                        </button>
+                        <button class="action-btn" onclick="shareResults()">
+                            <span class="action-icon">📤</span>
+                            Share Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bot Panel -->
+            <div class="bot-panel glass-effect">
+                <div class="bot-header">
+                    <div class="bot-avatar">
+                        <div class="avatar-ring"></div>
+                        <div class="avatar-inner">🤖</div>
+                    </div>
+                    <div class="bot-info">
+                        <div class="bot-name-container">
+                            <span class="bot-name">{{ bot_name }}</span>
+                            <span class="bot-version">AI v2.0</span>
+                        </div>
+                        <div class="bot-status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Online - Ready to assist</span>
+                        </div>
+                    </div>
+                    <div class="bot-actions">
+                        <button class="bot-action" onclick="clearBotChat()" title="Clear chat">
+                            <span class="action-icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bot-messages" id="botMessages">
+                    <div class="message bot-message">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="message-sender">Aditya</div>
+                            <div class="message-text">
+                                Hello! I'm your AI security assistant. I can help you scan files, check URLs, and analyze GitHub repositories for threats. What would you like to do?
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bot-input-container">
+                    <input type="text" class="bot-input" id="botInput" placeholder="Ask me anything about security..." autocomplete="off">
+                    <button class="bot-send-btn" onclick="sendBotMessage()">
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+
+                <div class="bot-suggestions">
+                    <button class="suggestion-chip" onclick="askBot('How do I scan a file?')">
+                        📁 Scan file
+                    </button>
+                    <button class="suggestion-chip" onclick="askBot('Check if a URL is safe')">
+                        🔗 Check URL
+                    </button>
+                    <button class="suggestion-chip" onclick="askBot('Analyze GitHub repository')">
+                        🐙 GitHub scan
+                    </button>
+                    <button class="suggestion-chip" onclick="askBot('What threats do you detect?')">
+                        ⚠️ Threats
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans Section -->
+        <div class="recent-scans-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="title-icon">📋</span>
+                    Recent Scans
+                </h2>
+                <div class="section-filters">
+                    <button class="filter-btn active" onclick="filterHistory('all')">All</button>
+                    <button class="filter-btn" onclick="filterHistory('file')">Files</button>
+                    <button class="filter-btn" onclick="filterHistory('url')">URLs</button>
+                    <button class="filter-btn" onclick="filterHistory('github')">GitHub</button>
+                </div>
+            </div>
+            <div class="history-grid" id="historyGrid">
+                <!-- History items will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Adixtpy Security</h4>
+                    <p>Advanced threat detection and analysis platform</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#" onclick="showAbout()">About</a></li>
+                        <li><a href="#" onclick="showPrivacy()">Privacy</a></li>
+                        <li><a href="#" onclick="showTerms()">Terms</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link">GitHub</a>
+                        <a href="#" class="social-link">Telegram</a>
+                        <a href="#" class="social-link">Twitter</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2024 Adixtpy Security. All rights reserved.</span>
+                <span>Made with 🛡️ by Adixtpy</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
